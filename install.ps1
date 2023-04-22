@@ -1,31 +1,41 @@
-# Install Git for Windows
-Invoke-WebRequest -Uri https://github.com/git-for-windows/git/releases/download/v2.31.1.windows.1/Git-2.31.1.1-64-bit.exe -OutFile Git-2.31.1.1-64-bit.exe
-New-Item -ItemType Directory -Path GitSetup
-7z x Git-2.31.1.1-64-bit.exe -o GitSetup
-Start-Process -FilePath GitSetup\git-bash.exe -ArgumentList GitSetup\setup-x86_64.exe,'/SP-','/VERYSILENT','/NORESTART' -Wait
+# Install Git
+Write-Host "Installing Git..."
+Start-Process -FilePath "https://github.com/git-for-windows/git/releases/download/v2.32.0.windows.2/Git-2.32.0.2-64-bit.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
 
-# Install Python 3.10
-Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.10.0/python-3.10.0-amd64.exe -OutFile python-3.10.0-amd64.exe
-Start-Process -FilePath python-3.10.0-amd64.exe -ArgumentList '/quiet','InstallAllUsers=1','PrependPath=1' -Wait
+# Install Python
+Write-Host "Installing Python..."
+Start-Process -FilePath "https://www.python.org/ftp/python/3.9.7/python-3.9.7-amd64.exe" -ArgumentList "/quiet", "TargetDir=C:\Python39" -Wait
 
-# Install 7-Zip
-Invoke-WebRequest -Uri https://www.7-zip.org/a/7z2104-x64.exe -OutFile 7z2104-x64.exe
-New-Item -ItemType Directory -Path 7zSetup
-7z x 7z2104-x64.exe -o 7zSetup
-Start-Process -FilePath 7zSetup\7z1900-x64.exe -ArgumentList '/S' -Wait
+# Define the URLs of the GitHub repositories
+$cowrieUrl = "https://github.com/adhdproject/cowrie.git"
+$impostorUrl = "https://github.com/superswan/impostor.git"
+$canarytokensUrl = "https://github.com/thinkst/canarytokens.git"
+$portspoofUrl = "https://github.com/drk1wi/portspoof.git"
 
-# Install Canarytokens
-git clone https://github.com/thinkst/canarytokens.git
+# Define the installation paths for each program
+$cowriePath = "C:\Program Files\Cowrie"
+$impostorPath = "C:\Program Files\Impostor"
+$canarytokensPath = "C:\Program Files\Canarytokens"
+$portspoofPath = "C:\Program Files\Portspoof"
 
-# Install Cowrie
-git clone https://github.com/adhdproject/cowrie.git
+# Clone the repositories from GitHub
+Write-Host "Cloning GitHub repositories..."
+git clone $cowrieUrl $cowriePath
+git clone $impostorUrl $impostorPath
+git clone $canarytokensUrl $canarytokensPath
+git clone $portspoofUrl $portspoofPath
 
-# Install Impostor
-git clone https://github.com/superswan/impostor.git
-
-# Install Portspoof
-git clone https://github.com/drk1wi/portspoof.git
-cd portspoof
+# Install each program
+Write-Host "Installing programs..."
+cd $cowriePath
+python setup.py install
+cd $impostorPath
+python setup.py install
+cd $canarytokensPath
+python setup.py install
+cd $portspoofPath
 ./configure
 make
-sudo make install
+make install
+
+Write-Host "Installation complete."
