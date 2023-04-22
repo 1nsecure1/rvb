@@ -1,31 +1,29 @@
-# Install Git and Python (if not already installed)
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Write-Host "Git is not installed. Installing Git..."
-    choco install git -y
-}
+# Install Python
+Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.10.2/python-3.10.2-amd64.exe" -OutFile "$env:USERPROFILE\Downloads\python-3.10.2-amd64.exe"
+Start-Process -FilePath "$env:USERPROFILE\Downloads\python-3.10.2-amd64.exe" -ArgumentList '/quiet InstallAllUsers=1 PrependPath=1' -Wait
 
-if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-    Write-Host "Python is not installed. Installing Python..."
-    choco install python -y
-}
+# Install Git for Windows
+Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.31.1.windows.1/Git-2.31.1-64-bit.exe" -OutFile "$env:USERPROFILE\Downloads\Git-2.31.1-64-bit.exe"
+Start-Process -FilePath "$env:USERPROFILE\Downloads\Git-2.31.1-64-bit.exe" -ArgumentList '/SILENT' -Wait
 
-# Install Portspoof
-$portspoofDir = "$env:ProgramFiles\Portspoof"
+# Install Portspoof dependencies
+choco install -y make
+choco install -y mingw
+choco install -y mingw-make
 
-if (-not (Test-Path $portspoofDir)) {
-    # Clone Portspoof repository
-    Write-Host "Cloning Portspoof repository..."
-    git clone https://github.com/drk1wi/portspoof.git $portspoofDir
+# Clone Portspoof repository
+git clone https://github.com/drk1wi/portspoof.git
+cd portspoof
 
-    # Build and install Portspoof
-    Write-Host "Building and installing Portspoof..."
-    Push-Location $portspoofDir
-    ./configure
-    make
-    make install
-    Pop-Location
+# Build and install Portspoof
+./configure
+make
+make install
 
-    Write-Host "Portspoof installed successfully."
-} else {
-    Write-Host "Portspoof is already installed in $portspoofDir."
-}
+# Download and install Git Bash
+Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.31.1.windows.1/MinGit-2.31.1-64-bit.zip" -OutFile "$env:USERPROFILE\Downloads\MinGit-2.31.1-64-bit.zip"
+Expand-Archive -Path "$env:USERPROFILE\Downloads\MinGit-2.31.1-64-bit.zip" -DestinationPath "C:\Program Files\GitBash"
+
+# Run Portspoof
+cd /usr/local/bin/
+./portspoof -c /etc/portspoof.conf
