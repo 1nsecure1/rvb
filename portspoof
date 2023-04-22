@@ -1,31 +1,23 @@
-# Check if Git is installed and install it if not
-if (!(Test-Path "C:\Program Files\Git\bin\git.exe")) {
-    Write-Host "Git is not installed. Downloading and installing Git..."
-    Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.31.1.windows.1/Git-2.31.1-64-bit.exe" -OutFile "Git-2.31.1-64-bit.exe"
-    Start-Process -FilePath "Git-2.31.1-64-bit.exe" -ArgumentList "/SILENT /NORESTART" -Wait
-    Remove-Item "Git-2.31.1-64-bit.exe"
-    Write-Host "Git has been installed."
-}
+# Create a new directory for Portspoof
+New-Item -ItemType Directory -Path "C:\Program Files\Portspoof"
 
-# Check if Python is installed and install it if not
-if (!(Test-Path "C:\Python39\python.exe")) {
-    Write-Host "Python is not installed. Downloading and installing Python..."
-    Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.9.6/python-3.9.6-amd64.exe" -OutFile "python-3.9.6-amd64.exe"
-    Start-Process -FilePath "python-3.9.6-amd64.exe" -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
-    Remove-Item "python-3.9.6-amd64.exe"
-    Write-Host "Python has been installed."
-}
+# Download and extract Portspoof
+Invoke-WebRequest -Uri "https://github.com/drk1wi/portspoof/archive/refs/tags/v3.5.0.tar.gz" -OutFile "portspoof.tar.gz"
+Expand-Archive -Path "portspoof.tar.gz" -DestinationPath "C:\Program Files\Portspoof"
+Remove-Item "portspoof.tar.gz"
 
-# Check if Portspoof is installed and install it if not
-if (!(Test-Path "C:\Program Files (x86)\Portspoof\portspoof.exe")) {
-    Write-Host "Portspoof is not installed. Downloading and installing Portspoof..."
-    Invoke-WebRequest -Uri "https://github.com/drk1wi/portspoof/archive/refs/tags/v3.5.0.tar.gz" -OutFile "portspoof.tar.gz"
-    Expand-Archive -Path "portspoof.tar.gz" -DestinationPath "."
-    Move-Item -Path "portspoof-3.5.0" -Destination "C:\Program Files (x86)\Portspoof"
-    Remove-Item "portspoof.tar.gz"
-    Write-Host "Portspoof has been installed."
-}
+# Install dependencies
+Invoke-WebRequest -Uri "https://sourceforge.net/projects/tdm-gcc/files/TDM-GCC%20Installer/tdm64-gcc-9.2.0.exe/download" -OutFile "tdm64-gcc-9.2.0.exe"
+Start-Process -FilePath "tdm64-gcc-9.2.0.exe" -ArgumentList "/S" -Wait
+Remove-Item "tdm64-gcc-9.2.0.exe"
 
-# Run Portspoof
-Write-Host "Starting Portspoof..."
-Start-Process -FilePath "C:\Program Files (x86)\Portspoof\portspoof.exe" -ArgumentList "-c portspoof.conf" -Wait
+# Build Portspoof
+Set-Location "C:\Program Files\Portspoof\portspoof-3.5.0"
+.\configure
+mingw32-make
+
+# Add Portspoof to the system PATH
+$env:Path += ";C:\Program Files\Portspoof\portspoof-3.5.0"
+
+# Verify Portspoof installation
+portspoof -v
