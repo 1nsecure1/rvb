@@ -1,41 +1,49 @@
-# Install Git
-Write-Host "Installing Git..."
-Start-Process -FilePath "https://github.com/git-for-windows/git/releases/download/v2.32.0.windows.2/Git-2.32.0.2-64-bit.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
+# InstallRepositories.ps1
 
-# Install Python
-Write-Host "Installing Python..."
-Start-Process -FilePath "https://www.python.org/ftp/python/3.9.7/python-3.9.7-amd64.exe" -ArgumentList "/quiet", "TargetDir=C:\Python39" -Wait
+# Install required packages
+Write-Host "Installing Chocolatey..."
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
-# Define the URLs of the GitHub repositories
-$cowrieUrl = "https://github.com/adhdproject/cowrie.git"
-$impostorUrl = "https://github.com/superswan/impostor.git"
-$canarytokensUrl = "https://github.com/thinkst/canarytokens.git"
-$portspoofUrl = "https://github.com/drk1wi/portspoof.git"
+Write-Host "Installing Git, Python, and Visual Studio Build Tools..."
+choco install -y git python --version=3.6.8 visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
 
-# Define the installation paths for each program
-$cowriePath = "C:\Program Files\Cowrie"
-$impostorPath = "C:\Program Files\Impostor"
-$canarytokensPath = "C:\Program Files\Canarytokens"
-$portspoofPath = "C:\Program Files\Portspoof"
+# Update PATH
+$Env:Path += ";C:\Python36;C:\Python36\Scripts;C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\*\bin\Hostx64\x64"
 
-# Clone the repositories from GitHub
-Write-Host "Cloning GitHub repositories..."
-git clone $cowrieUrl $cowriePath
-git clone $impostorUrl $impostorPath
-git clone $canarytokensUrl $canarytokensPath
-git clone $portspoofUrl $portspoofPath
+# Clone repositories
+Write-Host "Cloning repositories..."
+git clone https://github.com/adhdproject/cowrie.git
+git clone https://github.com/superswan/impostor.git
+git clone https://github.com/thinkst/canarytokens.git
+git clone https://github.com/drk1wi/portspoof.git
 
-# Install each program
-Write-Host "Installing programs..."
-cd $cowriePath
+# Install and configure Cowrie
+Write-Host "Installing and configuring Cowrie..."
+cd cowrie
+python -m pip install --upgrade pip
+python -m pip install virtualenv
+python -m virtualenv cowrie-env
+.\cowrie-env\Scripts\activate
+python -m pip install --upgrade -r requirements.txt
+cp cowrie.cfg.dist cowrie.cfg
+deactivate
+
+# Install and configure Impostor
+Write-Host "Installing and configuring Impostor..."
+cd ..\impostor
 python setup.py install
-cd $impostorPath
-python setup.py install
-cd $canarytokensPath
-python setup.py install
-cd $portspoofPath
-./configure
-make
-make install
 
-Write-Host "Installation complete."
+# Install and configure Canarytokens
+Write-Host "Installing and configuring Canarytokens..."
+cd ..\canarytokens
+python -m pip install -r requirements.txt
+cd frontend
+python -m pip install -r requirements.txt
+cd ..
+cp switchboard.env.dist switchboard.env
+cp frontend.env.dist frontend.env
+
+# Install and configure Portspoof (manual compilation is required, refer to Portspoof documentation)
+Write-Host "Portspoof requires manual compilation on Windows. Please refer to the Portspoof documentation for further instructions."
+
+Write-Host "Installation completed."
