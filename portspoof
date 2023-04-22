@@ -2,7 +2,7 @@
 if (!(Get-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsystem-Linux").State -eq "Enabled") {
     # Enable WSL
     Write-Host "Enabling Windows Subsystem for Linux..."
-    Enable-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsystem-Linux" -NoRestart
+    Install-WindowsFeature -Name Microsoft-Windows-Subsystem-Linux
 
     # Restart the computer to apply changes
     Write-Host "Restarting the computer to apply changes..."
@@ -11,17 +11,10 @@ if (!(Get-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsyst
 
 # Check if Ubuntu is installed
 if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
-    # Download Ubuntu Appx file from GitHub
+    # Download Ubuntu Appx file
     Write-Host "Downloading Ubuntu Appx file..."
     $ubuntu_url = "https://aka.ms/wslubuntu2004"
-    $webclient = New-Object System.Net.WebClient
-    try {
-        $webclient.DownloadFile($ubuntu_url, "Ubuntu.appx")
-    }
-    catch {
-        Write-Host "Error: Failed to download the Ubuntu Appx file. Please check your network connection or try again later."
-        exit
-    }
+    Invoke-WebRequest -Uri $ubuntu_url -OutFile "Ubuntu.appx" -UseBasicParsing
 
     # Install Ubuntu
     Write-Host "Installing Ubuntu..."
@@ -29,13 +22,13 @@ if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
         Add-AppxPackage -Path "Ubuntu.appx"
     }
     catch {
-        Write-Host "Error: Failed to install Ubuntu. Please install it manually from the Microsoft Store."
+        Write-Host "Error: Failed to install Ubuntu. Please try again or install it manually."
         if (Test-Path "Ubuntu.appx") {
             Remove-Item "Ubuntu.appx"
         }
         exit
     }
-    
+
     # Remove the downloaded Appx file if it exists
     if (Test-Path "Ubuntu.appx") {
         Remove-Item "Ubuntu.appx"
@@ -48,4 +41,36 @@ if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
     Read-Host
 }
 
-# Continue with the rest of the original script...
+# Update and upgrade packages
+Write-Host "Updating and upgrading packages..."
+wsl sudo apt update && sudo apt upgrade -y
+
+# Install build-essential and git
+Write-Host "Installing build-essential and git..."
+wsl sudo apt install -y build-essential git
+
+# Clone Portspoof repository
+Write-Host "Cloning Portspoof repository..."
+wsl git clone https://github.com/drk1wi/portspoof.git
+
+# Change to Portspoof directory
+wsl cd portspoof
+
+# Build Portspoof
+Write-Host "Building Portspoof..."
+wsl ./configure && wsl make
+
+# Install Portspoof
+Write-Host "Installing Portspoof..."
+wsl sudo make install
+
+# Download Portspoof configuration file
+Write-Host "Downloading Portspoof configuration file..."
+wsl sudo wget -O /usr/local/etc/portspoof.conf https://raw.githubusercontent.com/drk1wi/portspoof/master/conf/portspoof.conf
+
+# Generate signatures
+Write-Host "Generating signatures..."
+wsl sudo /usr/local/bin/portspoof -s /usr/local/etc/portspoof_signatures -n 10000
+
+# Portspoof is now installed and ready to use on your Windows Server 2019 with WSL Ubuntu.
+Write-Host "Portspoof installation is complete."
