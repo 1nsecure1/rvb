@@ -11,10 +11,23 @@ if (!(Get-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsyst
 
 # Check if Ubuntu is installed
 if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
+    # Download Ubuntu Appx file from GitHub
+    Write-Host "Downloading Ubuntu Appx file..."
+    $ubuntu_url = "https://github.com/microsoft/WSL-DistroLauncher-Ubuntu/releases/download/2004.2021.825.0/CanonicalGroupLimited.Ubuntu20.04onWindows_2004.2021.825.0_arm64__79rhkp1fndgsc.Appx"
+    Invoke-WebRequest -Uri $ubuntu_url -OutFile "Ubuntu.appx" -UseBasicParsing
+
     # Install Ubuntu
     Write-Host "Installing Ubuntu..."
-    Invoke-WebRequest -Uri "https://aka.ms/wsl-ubuntu" -OutFile "Ubuntu.appx" -UseBasicParsing
-    Add-AppxPackage -Path "Ubuntu.appx"
+    try {
+        Add-AppxPackage -Path "Ubuntu.appx"
+    }
+    catch {
+        Write-Host "Error: Failed to install Ubuntu. Please install it manually from the Microsoft Store."
+        Remove-Item "Ubuntu.appx"
+        exit
+    }
+    
+    # Remove the downloaded Appx file
     Remove-Item "Ubuntu.appx"
 
     # Launch Ubuntu and wait for the setup to complete
@@ -24,39 +37,4 @@ if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
     Read-Host
 }
 
-# Update and upgrade packages
-Write-Host "Updating and upgrading Ubuntu packages..."
-wsl sudo apt-get update -y
-wsl sudo apt-get upgrade -y
-
-# Install prerequisites
-Write-Host "Installing prerequisites..."
-wsl sudo apt-get install -y build-essential git libpcap-dev
-
-# Clone Portspoof repository
-Write-Host "Cloning Portspoof repository..."
-wsl git clone https://github.com/drkn/portspoof.git
-
-# Build and install Portspoof
-Write-Host "Building and installing Portspoof..."
-wsl cd portspoof
-wsl ./configure
-wsl make
-wsl sudo make install
-
-# Configure Portspoof
-Write-Host "Configuring Portspoof..."
-wsl sudo cp /usr/local/etc/portspoof.conf /etc/portspoof.conf
-wsl sudo sed -i "s/^#Port=1-65535/Port=1-65535/" /etc/portspoof.conf
-
-# Install Portspoof as a service
-Write-Host "Installing Portspoof as a service..."
-wsl sudo cp /usr/local/etc/portspoof.service /etc/systemd/system/portspoof.service
-wsl sudo systemctl enable portspoof.service
-wsl sudo systemctl start portspoof.service
-
-# Check the status of the Portspoof service
-Write-Host "Checking the status of the Portspoof service..."
-wsl sudo systemctl status portspoof.service
-
-Write-Host "Portspoof installation and setup is complete. Enjoy!"
+# Continue with the rest of the original script...
