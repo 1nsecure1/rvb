@@ -13,7 +13,7 @@ if (!(Get-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsyst
 if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
     # Download Ubuntu Appx file from GitHub
     Write-Host "Downloading Ubuntu Appx file..."
-    $ubuntu_url = "https://github.com/microsoft/WSL-DistroLauncher-Ubuntu/releases/download/2004.2021.825.0/CanonicalGroupLimited.Ubuntu20.04onWindows_2004.2021.825.0_arm64__79rhkp1fndgsc.Appx"
+    $ubuntu_url = "https://aka.ms/wslubuntu2004"
     $webclient = New-Object System.Net.WebClient
     try {
         $webclient.DownloadFile($ubuntu_url, "Ubuntu.appx")
