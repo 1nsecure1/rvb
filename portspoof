@@ -1,0 +1,31 @@
+# Install Git and Python (if not already installed)
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Host "Git is not installed. Installing Git..."
+    choco install git -y
+}
+
+if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+    Write-Host "Python is not installed. Installing Python..."
+    choco install python -y
+}
+
+# Install Portspoof
+$portspoofDir = "$env:ProgramFiles\Portspoof"
+
+if (-not (Test-Path $portspoofDir)) {
+    # Clone Portspoof repository
+    Write-Host "Cloning Portspoof repository..."
+    git clone https://github.com/drk1wi/portspoof.git $portspoofDir
+
+    # Build and install Portspoof
+    Write-Host "Building and installing Portspoof..."
+    Push-Location $portspoofDir
+    ./configure
+    make
+    make install
+    Pop-Location
+
+    Write-Host "Portspoof installed successfully."
+} else {
+    Write-Host "Portspoof is already installed in $portspoofDir."
+}
