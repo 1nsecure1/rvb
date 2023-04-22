@@ -1,29 +1,27 @@
-# Install Python
-Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.10.2/python-3.10.2-amd64.exe" -OutFile "$env:USERPROFILE\Downloads\python-3.10.2-amd64.exe"
-Start-Process -FilePath "$env:USERPROFILE\Downloads\python-3.10.2-amd64.exe" -ArgumentList '/quiet InstallAllUsers=1 PrependPath=1' -Wait
+# Check if Git is installed
+if (!(Get-Command git -ErrorAction SilentlyContinue)) {
+    # Install Git
+    Start-Process -FilePath "https://git-scm.com/download/win" -ArgumentList "/SILENT" -Wait
+}
 
-# Install Git for Windows
-Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.31.1.windows.1/Git-2.31.1-64-bit.exe" -OutFile "$env:USERPROFILE\Downloads\Git-2.31.1-64-bit.exe"
-Start-Process -FilePath "$env:USERPROFILE\Downloads\Git-2.31.1-64-bit.exe" -ArgumentList '/SILENT' -Wait
+# Check if Git Bash is installed
+if (!(Test-Path "C:\Program Files\Git\bin\bash.exe")) {
+    # Download and install Git Bash
+    Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.31.1.windows.1/Git-2.31.1-64-bit.exe" -OutFile "$env:TEMP\Git-2.31.1-64-bit.exe"
+    Start-Process -FilePath "$env:TEMP\Git-2.31.1-64-bit.exe" -ArgumentList "/VERYSILENT /NORESTART" -Wait
+}
 
-# Install Portspoof dependencies
-choco install -y make
-choco install -y mingw
-choco install -y mingw-make
+# Check if Python is installed
+if (!(Get-Command python -ErrorAction SilentlyContinue)) {
+    # Download and install Python
+    Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.9.2/python-3.9.2-amd64.exe" -OutFile "$env:TEMP\python-3.9.2-amd64.exe"
+    Start-Process -FilePath "$env:TEMP\python-3.9.2-amd64.exe" -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
+}
 
-# Clone Portspoof repository
-git clone https://github.com/drk1wi/portspoof.git
-cd portspoof
-
-# Build and install Portspoof
-./configure
+# Install Portspoof
+Invoke-WebRequest -Uri "https://github.com/drk1wi/portspoof/archive/refs/tags/v3.6.0.zip" -OutFile "$env:TEMP\portspoof.zip"
+Expand-Archive -Path "$env:TEMP\portspoof.zip" -DestinationPath "$env:ProgramFiles\Portspoof"
+Set-Location -Path "$env:ProgramFiles\Portspoof\portspoof-3.6.0\src"
+.\configure
 make
 make install
-
-# Download and install Git Bash
-Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.31.1.windows.1/MinGit-2.31.1-64-bit.zip" -OutFile "$env:USERPROFILE\Downloads\MinGit-2.31.1-64-bit.zip"
-Expand-Archive -Path "$env:USERPROFILE\Downloads\MinGit-2.31.1-64-bit.zip" -DestinationPath "C:\Program Files\GitBash"
-
-# Run Portspoof
-cd /usr/local/bin/
-./portspoof -c /etc/portspoof.conf
