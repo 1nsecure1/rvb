@@ -30,12 +30,16 @@ if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
     }
     catch {
         Write-Host "Error: Failed to install Ubuntu. Please install it manually from the Microsoft Store."
-        Remove-Item "Ubuntu.appx"
+        if (Test-Path "Ubuntu.appx") {
+            Remove-Item "Ubuntu.appx"
+        }
         exit
     }
     
-    # Remove the downloaded Appx file
-    Remove-Item "Ubuntu.appx"
+    # Remove the downloaded Appx file if it exists
+    if (Test-Path "Ubuntu.appx") {
+        Remove-Item "Ubuntu.appx"
+    }
 
     # Launch Ubuntu and wait for the setup to complete
     Write-Host "Launching Ubuntu for the first time to complete the setup. Please follow the prompts."
