@@ -1,25 +1,23 @@
-@echo off
+# Create a new directory for Portspoof
+New-Item -ItemType Directory -Path "C:\Program Files\Portspoof"
 
-:: Create a new directory for Portspoof
-mkdir "C:\Program Files\Portspoof"
+# Download and extract Portspoof
+Invoke-WebRequest -Uri 'https://github.com/drk1wi/portspoof/archive/refs/tags/v3.5.0.tar.gz' -OutFile 'portspoof.tar.gz'
+Expand-Archive -Path 'portspoof.tar.gz' -DestinationPath 'C:\Program Files\Portspoof'
+Remove-Item 'portspoof.tar.gz'
 
-:: Download and extract Portspoof
-powershell -Command "Invoke-WebRequest -Uri 'https://github.com/drk1wi/portspoof/archive/refs/tags/v3.5.0.tar.gz' -OutFile 'portspoof.tar.gz'"
-powershell -Command "Expand-Archive -Path 'portspoof.tar.gz' -DestinationPath 'C:\Program Files\Portspoof'"
-del "portspoof.tar.gz"
+# Install dependencies
+Invoke-WebRequest -Uri 'https://sourceforge.net/projects/tdm-gcc/files/TDM-GCC%20Installer/tdm64-gcc-9.2.0.exe/download' -OutFile 'tdm64-gcc-9.2.0.exe'
+Start-Process -FilePath 'tdm64-gcc-9.2.0.exe' -ArgumentList '/S' -Wait
+Remove-Item 'tdm64-gcc-9.2.0.exe'
 
-:: Install dependencies
-powershell -Command "Invoke-WebRequest -Uri 'https://sourceforge.net/projects/tdm-gcc/files/TDM-GCC%20Installer/tdm64-gcc-9.2.0.exe/download' -OutFile 'tdm64-gcc-9.2.0.exe'"
-tdm64-gcc-9.2.0.exe /S
-del "tdm64-gcc-9.2.0.exe"
-
-:: Build Portspoof
-cd "C:\Program Files\Portspoof\portspoof-3.5.0"
+# Build Portspoof
+cd 'C:\Program Files\Portspoof\portspoof-3.5.0'
 .\configure
 mingw32-make
 
-:: Add Portspoof to the system PATH
-setx PATH "%PATH%;C:\Program Files\Portspoof\portspoof-3.5.0"
+# Add Portspoof to the system PATH
+$env:Path = "$env:Path;C:\Program Files\Portspoof\portspoof-3.5.0"
 
-:: Verify Portspoof installation
+# Verify Portspoof installation
 portspoof -v
