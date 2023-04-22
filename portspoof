@@ -43,34 +43,34 @@ if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
 
 # Update and upgrade packages
 Write-Host "Updating and upgrading packages..."
-wsl sudo apt update && sudo apt upgrade -y
+wsl "sudo apt update && sudo apt upgrade -y"
 
 # Install build-essential and git
 Write-Host "Installing build-essential and git..."
-wsl sudo apt install -y build-essential git
+wsl "sudo apt install -y build-essential git"
 
 # Clone Portspoof repository
 Write-Host "Cloning Portspoof repository..."
-wsl git clone https://github.com/drk1wi/portspoof.git
+wsl "git clone https://github.com/drk1wi/portspoof.git"
 
 # Change to Portspoof directory
-wsl cd portspoof
+wsl "cd portspoof"
 
 # Build Portspoof
 Write-Host "Building Portspoof..."
-wsl ./configure && wsl make
+wsl "cd ~/portspoof && ./configure && make"
 
 # Install Portspoof
 Write-Host "Installing Portspoof..."
-wsl sudo make install
+wsl "sudo make install"
 
 # Download Portspoof configuration file
 Write-Host "Downloading Portspoof configuration file..."
-wsl sudo wget -O /usr/local/etc/portspoof.conf https://raw.githubusercontent.com/drk1wi/portspoof/master/conf/portspoof.conf
+wsl "sudo wget -O /usr/local/etc/portspoof.conf https://raw.githubusercontent.com/drk1wi/portspoof/master/conf/portspoof.conf"
 
 # Generate signatures
 Write-Host "Generating signatures..."
-wsl sudo /usr/local/bin/portspoof -s /usr/local/etc/portspoof_signatures -n 10000
+wsl "sudo /usr/local/bin/portspoof -s /usr/local/etc/portspoof_signatures -n 10000"
 
 # Portspoof is now installed and ready to use on your Windows Server 2019 with WSL Ubuntu.
 Write-Host "Portspoof installation is complete."
