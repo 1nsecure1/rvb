@@ -1,39 +1,25 @@
-# Check if WSL is available
-$wslState = (Get-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsystem-Linux").State
-$vmPlatformState = (Get-WindowsOptionalFeature -Online -FeatureName "VirtualMachinePlatform").State
+# Install WSL and Ubuntu Minimal
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
+Invoke-WebRequest -Uri https://cloud-images.ubuntu.com/minimal/releases/bionic/release/ubuntu-18.04-minimal-cloudimg-amd64-root.tar.xz -OutFile ubuntu.tar.xz
+mkdir C:\WSL
+tar -xvf ubuntu.tar.xz -C C:\WSL --strip-components=3
+ubuntu.exe
 
-if ($wslState -ne "Enabled" -or $vmPlatformState -ne "Enabled") {
-    # Enable WSL
-    Write-Host "Enabling Windows Subsystem for Linux..."
-    dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+# Install Portspoof dependencies and build tools
+sudo apt-get update
+sudo apt-get install -y build-essential libpcap-dev git
 
-    # Enable Virtual Machine Platform
-    Write-Host "Enabling Virtual Machine Platform..."
-    dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+# Download and compile Portspoof
+git clone https://github.com/drk1wi/portspoof.git
+cd portspoof
+make
 
-    # Restart the computer to apply changes
-    Write-Host "Restarting the computer to apply changes..."
-    Restart-Computer
-} else {
-    # Download and install WSL2
-    Write-Host "Downloading and installing WSL2..."
-    Invoke-WebRequest -Uri "https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi" -OutFile "wsl_update_x64.msi" -UseBasicParsing
-    Start-Process -Wait -FilePath "wsl_update_x64.msi" -ArgumentList "/quiet /qn /norestart"
+# Configure Portspoof
+sudo nano /usr/local/etc/portspoof.conf
 
-    # Set WSL2 as the default
-    Write-Host "Setting WSL2 as default version..."
-    wslconfig /setdefaultversion 2
+# Add firewall rules to allow incoming traffic on the Portspoof TCP and UDP ports
+sudo ufw allow 4444/tcp
+sudo ufw allow 4445/udp
 
-    # Download and install Ubuntu 20.04 LTS
-    Write-Host "Downloading and installing Ubuntu 20.04 LTS..."
-    Invoke-WebRequest -Uri "https://aka.ms/wslubuntu2004" -OutFile "Ubuntu2004.appx" -UseBasicParsing
-    Add-AppxPackage -Path "Ubuntu2004.appx"
-
-    # Launch Ubuntu to set up the environment and create a user
-    Write-Host "Launch Ubuntu to set up the environment and create a user."
-    Start-Process -FilePath "ubuntu2004.exe"
-
-    # Press Enter after setting up the user in Ubuntu.
-    Write-Host "Press Enter after setting up the user in Ubuntu."
-    Read-Host
-}
+# Start the Portspoof service
+sudo portspoof -c /usr/local/etc/portspoof.conf -s /usr/local/share/portspoof/signatures -D
