@@ -5,6 +5,9 @@ mkdir C:\WSL
 tar -xvf ubuntu.tar.xz -C C:\WSL --strip-components=3
 ubuntu.exe
 
+# Install the OpenSSH client package
+Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
+
 # Install Portspoof dependencies and build tools
 sudo apt-get update
 sudo apt-get install -y build-essential libpcap-dev git
