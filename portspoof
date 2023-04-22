@@ -1,76 +1,64 @@
-# Check if WSL is available
-if (!(Get-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsystem-Linux").State -eq "Enabled") {
-    # Enable WSL
-    Write-Host "Enabling Windows Subsystem for Linux..."
-    Install-WindowsFeature -Name Microsoft-Windows-Subsystem-Linux
+# Enable WSL
+Write-Host "Enabling Windows Subsystem for Linux..."
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
 
-    # Restart the computer to apply changes
-    Write-Host "Restarting the computer to apply changes..."
-    Restart-Computer
-}
+# Enable Virtual Machine Platform
+Write-Host "Enabling Virtual Machine Platform..."
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
 
-# Check if Ubuntu is installed
-if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
-    # Download Ubuntu Appx file
-    Write-Host "Downloading Ubuntu Appx file..."
-    $ubuntu_url = "https://aka.ms/wslubuntu2004"
-    Invoke-WebRequest -Uri $ubuntu_url -OutFile "Ubuntu.appx" -UseBasicParsing
+# Restart the computer to apply changes
+Write-Host "Restarting the computer to apply changes..."
+Restart-Computer
 
-    # Install Ubuntu
-    Write-Host "Installing Ubuntu..."
-    try {
-        Add-AppxPackage -Path "Ubuntu.appx"
-    }
-    catch {
-        Write-Host "Error: Failed to install Ubuntu. Please try again or install it manually."
-        if (Test-Path "Ubuntu.appx") {
-            Remove-Item "Ubuntu.appx"
-        }
-        exit
-    }
+# After the restart, open a new PowerShell as administrator and continue with the following commands:
 
-    # Remove the downloaded Appx file if it exists
-    if (Test-Path "Ubuntu.appx") {
-        Remove-Item "Ubuntu.appx"
-    }
+# Download and install WSL2
+Write-Host "Downloading and installing WSL2..."
+Invoke-WebRequest -Uri "https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi" -OutFile "wsl_update_x64.msi" -UseBasicParsing
+Start-Process -Wait -FilePath "wsl_update_x64.msi" -ArgumentList "/quiet /qn /norestart"
 
-    # Launch Ubuntu and wait for the setup to complete
-    Write-Host "Launching Ubuntu for the first time to complete the setup. Please follow the prompts."
-    Start-Process -FilePath "ubuntu.exe"
-    Write-Host "Press Enter after Ubuntu setup is complete."
-    Read-Host
-}
+# Set WSL2 as the default
+Write-Host "Setting WSL2 as default version..."
+wsl --set-default-version 2
 
-# Update and upgrade packages
-Write-Host "Updating and upgrading packages..."
-wsl "sudo apt update && sudo apt upgrade -y"
+# Download and install Ubuntu 20.04 LTS
+Write-Host "Downloading and installing Ubuntu 20.04 LTS..."
+Invoke-WebRequest -Uri "https://aka.ms/wslubuntu2004" -OutFile "Ubuntu2004.appx" -UseBasicParsing
+Add-AppxPackage -Path "Ubuntu2004.appx"
 
-# Install build-essential and git
-Write-Host "Installing build-essential and git..."
-wsl "sudo apt install -y build-essential git"
+# Launch Ubuntu to set up the environment and create a user
+Write-Host "Launch Ubuntu to set up the environment and create a user."
+Start-Process -FilePath "ubuntu2004.exe"
 
-# Clone Portspoof repository
-Write-Host "Cloning Portspoof repository..."
-wsl "git clone https://github.com/drk1wi/portspoof.git"
+# After the environment is set up, open a new PowerShell as administrator and continue with the following commands:
 
-# Change to Portspoof directory
-wsl "cd portspoof"
+# Update and upgrade packages in Ubuntu
+Write-Host "Updating and upgrading packages in Ubuntu..."
+wsl -e "sudo apt update && sudo apt upgrade -y"
 
-# Build Portspoof
-Write-Host "Building Portspoof..."
-wsl "cd ~/portspoof && ./configure && make"
+# Install build-essential and git in Ubuntu
+Write-Host "Installing build-essential and git in Ubuntu..."
+wsl -e "sudo apt install -y build-essential git"
 
-# Install Portspoof
-Write-Host "Installing Portspoof..."
-wsl "sudo make install"
+# Clone Portspoof repository in Ubuntu
+Write-Host "Cloning Portspoof repository in Ubuntu..."
+wsl -e "git clone https://github.com/drk1wi/portspoof.git"
 
-# Download Portspoof configuration file
-Write-Host "Downloading Portspoof configuration file..."
-wsl "sudo wget -O /usr/local/etc/portspoof.conf https://raw.githubusercontent.com/drk1wi/portspoof/master/conf/portspoof.conf"
+# Build Portspoof in Ubuntu
+Write-Host "Building Portspoof in Ubuntu..."
+wsl -e "cd portspoof && ./configure && make"
 
-# Generate signatures
-Write-Host "Generating signatures..."
-wsl "sudo /usr/local/bin/portspoof -s /usr/local/etc/portspoof_signatures -n 10000"
+# Install Portspoof in Ubuntu
+Write-Host "Installing Portspoof in Ubuntu..."
+wsl -e "sudo make install"
 
-# Portspoof is now installed and ready to use on your Windows Server 2019 with WSL Ubuntu.
+# Download Portspoof configuration file in Ubuntu
+Write-Host "Downloading Portspoof configuration file in Ubuntu..."
+wsl -e "sudo wget -O /usr/local/etc/portspoof.conf https://raw.githubusercontent.com/drk1wi/portspoof/master/conf/portspoof.conf"
+
+# Generate signatures in Ubuntu
+Write-Host "Generating signatures in Ubuntu..."
+wsl -e "sudo /usr/local/bin/portspoof -s /usr/local/etc/portspoof_signatures -n 10000"
+
+# Portspoof is now installed and ready to use on your Windows Server 2019 with WSL2 Ubuntu.
 Write-Host "Portspoof installation is complete."
