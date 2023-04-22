@@ -1,23 +1,62 @@
-# Create a new directory for Portspoof
-New-Item -ItemType Directory -Path "C:\Program Files\Portspoof"
+# Check if WSL is available
+if (!(Get-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsystem-Linux").State -eq "Enabled") {
+    # Enable WSL
+    Write-Host "Enabling Windows Subsystem for Linux..."
+    Enable-WindowsOptionalFeature -Online -FeatureName "Microsoft-Windows-Subsystem-Linux" -NoRestart
 
-# Download and extract Portspoof
-Invoke-WebRequest -Uri 'https://github.com/drk1wi/portspoof/archive/refs/tags/v3.5.0.tar.gz' -OutFile 'portspoof.tar.gz'
-Expand-Archive -Path 'portspoof.tar.gz' -DestinationPath 'C:\Program Files\Portspoof'
-Remove-Item 'portspoof.tar.gz'
+    # Restart the computer to apply changes
+    Write-Host "Restarting the computer to apply changes..."
+    Restart-Computer
+}
 
-# Install dependencies
-Invoke-WebRequest -Uri 'https://sourceforge.net/projects/tdm-gcc/files/TDM-GCC%20Installer/tdm64-gcc-9.2.0.exe/download' -OutFile 'tdm64-gcc-9.2.0.exe'
-Start-Process -FilePath 'tdm64-gcc-9.2.0.exe' -ArgumentList '/S' -Wait
-Remove-Item 'tdm64-gcc-9.2.0.exe'
+# Check if Ubuntu is installed
+if (!(Get-AppxPackage -Name "CanonicalGroupLimited.Ubuntu*")) {
+    # Install Ubuntu
+    Write-Host "Installing Ubuntu..."
+    Invoke-WebRequest -Uri "https://aka.ms/wsl-ubuntu" -OutFile "Ubuntu.appx" -UseBasicParsing
+    Add-AppxPackage -Path "Ubuntu.appx"
+    Remove-Item "Ubuntu.appx"
 
-# Build Portspoof
-cd 'C:\Program Files\Portspoof\portspoof-3.5.0'
-.\configure
-mingw32-make
+    # Launch Ubuntu and wait for the setup to complete
+    Write-Host "Launching Ubuntu for the first time to complete the setup. Please follow the prompts."
+    Start-Process -FilePath "ubuntu.exe"
+    Write-Host "Press Enter after Ubuntu setup is complete."
+    Read-Host
+}
 
-# Add Portspoof to the system PATH
-$env:Path = "$env:Path;C:\Program Files\Portspoof\portspoof-3.5.0"
+# Update and upgrade packages
+Write-Host "Updating and upgrading Ubuntu packages..."
+wsl sudo apt-get update -y
+wsl sudo apt-get upgrade -y
 
-# Verify Portspoof installation
-portspoof -v
+# Install prerequisites
+Write-Host "Installing prerequisites..."
+wsl sudo apt-get install -y build-essential git libpcap-dev
+
+# Clone Portspoof repository
+Write-Host "Cloning Portspoof repository..."
+wsl git clone https://github.com/drkn/portspoof.git
+
+# Build and install Portspoof
+Write-Host "Building and installing Portspoof..."
+wsl cd portspoof
+wsl ./configure
+wsl make
+wsl sudo make install
+
+# Configure Portspoof
+Write-Host "Configuring Portspoof..."
+wsl sudo cp /usr/local/etc/portspoof.conf /etc/portspoof.conf
+wsl sudo sed -i "s/^#Port=1-65535/Port=1-65535/" /etc/portspoof.conf
+
+# Install Portspoof as a service
+Write-Host "Installing Portspoof as a service..."
+wsl sudo cp /usr/local/etc/portspoof.service /etc/systemd/system/portspoof.service
+wsl sudo systemctl enable portspoof.service
+wsl sudo systemctl start portspoof.service
+
+# Check the status of the Portspoof service
+Write-Host "Checking the status of the Portspoof service..."
+wsl sudo systemctl status portspoof.service
+
+Write-Host "Portspoof installation and setup is complete. Enjoy!"
